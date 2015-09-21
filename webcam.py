@@ -4,19 +4,26 @@ import urllib
 from matplotlib import pyplot as plt
 import pytz
 from datetime import datetime
+from twitter import *
+import os
 
 timezone = pytz.timezone('Europe/Berlin')
-now = datetime.now(timezone)
-
-def is_webcam_running():
-    today8am = now.replace(hour=8, minute=0, second=0, microsecond=0)
-    today8pm = now.replace(hour=20, minute=0, second=0, microsecond=0)
-    return (today8am > now) & (now < today8pm)
+now = datetime.now(timezone).replace(hour=14, minute=17)
 
 def webcam_url():
     hour = str(now.hour)
     minute = str(now.minute / 15 * 15).zfill(2)
-    return 'http://www.dgfc-suedschwarzwald.de/webcam2/image-%(hour)-%(minute).jpg'
+    return "http://www.dgfc-suedschwarzwald.de/webcam2/image-%s-%s.jpg" % (hour, minute)
+
+def send_tweet():
+    t = Twitter(auth=OAuth(os.environ['TOKEN'], os.environ['TOKEN_KEY'], os.environ['CON_SECRET'], os.environ['CON_SECRET_KEY']))
+    message = 'Auf dem Kandel scheint was los zu sein! %s' % webcam_url()
+    t.statuses.update(status=message)
+
+def webcam_on():
+    today8am = now.replace(hour=8, minute=0, second=0, microsecond=0)
+    today8pm = now.replace(hour=20, minute=0, second=0, microsecond=0)
+    return (today8am < now) and (now < today8pm)
 
 def url_to_image(url):
     resp = urllib.urlopen(url)
@@ -38,10 +45,7 @@ def number_of_keypoints(image):
     keypoints = ff_detector.detect(masked_image,None)
     return len(keypoints)
 
-if is_webcam_running():
-    if number_of_keypoints(url_to_image(webcam_url())) > 70:
-        print 'something is going on'
-    else:
-        print 'nope, no one there'
-else:
-    print 'webcam is not running'
+def activity():
+    return number_of_keypoints(url_to_image(webcam_url())) > 70
+
+if webcam_on() and activity(): send_tweet()
