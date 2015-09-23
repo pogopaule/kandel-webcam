@@ -1,14 +1,13 @@
 import numpy
 import cv2
 import urllib
-from matplotlib import pyplot as plt
 import pytz
 from datetime import datetime
 from twitter import *
 import os
 
 timezone = pytz.timezone('Europe/Berlin')
-now = datetime.now(timezone).replace(hour=14, minute=17)
+now = datetime.now(timezone)
 
 def webcam_url():
     hour = str(now.hour)
@@ -48,4 +47,5 @@ def number_of_keypoints(image):
 def activity():
     return number_of_keypoints(url_to_image(webcam_url())) > 70
 
-if webcam_on() and activity(): send_tweet()
+def run():
+    if webcam_on() and activity(): send_tweet()
